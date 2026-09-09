@@ -92,3 +92,24 @@ workspacesRouter.delete(
     res.status(204).send();
   },
 );
+
+workspacesRouter.get(
+  "/:workspaceId/activity",
+  requireRole("collaborator"),
+  (req, res) => {
+    const limit = Number(req.query.limit) || 20;
+    const offset = Number(req.query.offset) || 0;
+
+    const entries = db
+      .prepare(
+        `SELECT id, actor, action, detail, created_at
+       FROM activity_log
+       WHERE workspace_id = ?
+       ORDER BY created_at DESC
+       LIMIT ? OFFSET ?`,
+      )
+      .all(req.params.workspaceId, limit, offset);
+
+    res.json(entries);
+  },
+);

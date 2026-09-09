@@ -6,8 +6,20 @@ import {
 } from "express";
 import { db } from "../db.js";
 import { requireRole } from "../middleware/requireRole.js";
+import { logActivity } from "../activityLog.js";
 
 export const cardsRouter = Router();
+
+interface Card {
+  id: number;
+  workspace_id: number;
+  column_key: string;
+  position: number;
+  title: string;
+  description: string | null;
+  version: number;
+  updated_at: string;
+}
 
 cardsRouter.post(
   "/workspaces/:workspaceId/cards",
@@ -15,6 +27,11 @@ cardsRouter.post(
   (req, res) => {
     const { columnKey, title, description } = req.body;
     const workspaceId = req.params.workspaceId;
+
+    if (!workspaceId || Array.isArray(workspaceId)) {
+      res.status(400).json({ error: "Invalid workspaceId" });
+      return;
+    }
 
     if (!columnKey || !title) {
       res.status(400).json({ error: "columnKey and title are required" });
@@ -35,6 +52,13 @@ cardsRouter.post(
        VALUES (?, ?, ?, ?, ?, 1)`,
       )
       .run(workspaceId, columnKey, newPosition, title, description ?? null);
+
+    logActivity(
+      workspaceId,
+      req.userId!,
+      "card_created",
+      `Card "${title}" was created`,
+    );
 
     res.status(201).json({
       id: result.lastInsertRowid,
@@ -107,7 +131,6 @@ cardsRouter.patch(
       .run(toColumn, toPosition, cardId, expectedVersion);
 
     if (result.changes === 0) {
-      // conflict OR card doesn't exist — fetch current state to tell client what's real
       const current = db
         .prepare(`SELECT * FROM cards WHERE id = ?`)
         .get(cardId);
@@ -119,7 +142,16 @@ cardsRouter.patch(
       return;
     }
 
-    const updated = db.prepare(`SELECT * FROM cards WHERE id = ?`).get(cardId);
+    const updated = db
+      .prepare(`SELECT * FROM cards WHERE id = ?`)
+      .get(cardId) as Card;
+
+    logActivity(
+      updated.workspace_id,
+      req.userId!,
+      "card_moved",
+      `Moved "${updated.title}" to ${updated.column_key}`,
+    );
     res.json(updated);
   },
 );
@@ -163,14 +195,24 @@ cardsRouter.delete(
   loadCardWorkspace,
   requireRole("collaborator"),
   (req, res) => {
-    const result = db
-      .prepare(`DELETE FROM cards WHERE id = ?`)
-      .run(req.params.id);
+    const cardId = req.params.id;
 
-    if (result.changes === 0) {
+    const card = db.prepare(`SELECT * FROM cards WHERE id = ?`).get(cardId) as
+      | Card
+      | undefined;
+
+    if (!card) {
       res.status(404).json({ error: "Card not found" });
       return;
     }
+    db.prepare(`DELETE FROM cards WHERE id = ?`).run(cardId);
+
+    logActivity(
+      card.workspace_id,
+      req.userId!,
+      "card_deleted",
+      `Card "${card.title}" was deleted`,
+    );
 
     res.status(204).send();
   },
