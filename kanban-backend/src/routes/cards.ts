@@ -7,6 +7,7 @@ import {
 import { db } from "../db.js";
 import { requireRole } from "../middleware/requireRole.js";
 import { logActivity } from "../activityLog.js";
+import { broadcastToWorkspace } from "../socket.js";
 
 export const cardsRouter = Router();
 
@@ -59,6 +60,16 @@ cardsRouter.post(
       "card_created",
       `Card "${title}" was created`,
     );
+
+    broadcastToWorkspace(workspaceId, "card:created", {
+      id: result.lastInsertRowid,
+      workspaceId,
+      columnKey,
+      position: newPosition,
+      title,
+      description: description ?? null,
+      version: 1,
+    });
 
     res.status(201).json({
       id: result.lastInsertRowid,
@@ -152,6 +163,7 @@ cardsRouter.patch(
       "card_moved",
       `Moved "${updated.title}" to ${updated.column_key}`,
     );
+    broadcastToWorkspace(updated.workspace_id, "card:moved", updated);
     res.json(updated);
   },
 );
@@ -180,12 +192,21 @@ cardsRouter.patch(
     if (result.changes === 0) {
       const current = db
         .prepare(`SELECT * FROM cards WHERE id = ?`)
-        .get(cardId);
+        .get(cardId) as Card;
       res.status(409).json({ error: "Version conflict", current });
       return;
     }
 
-    const updated = db.prepare(`SELECT * FROM cards WHERE id = ?`).get(cardId);
+    const updated = db
+      .prepare(`SELECT * FROM cards WHERE id = ?`)
+      .get(cardId) as Card;
+    logActivity(
+      updated.workspace_id,
+      req.userId!,
+      "card_edited",
+      `Edited "${updated.title}"`,
+    );
+    broadcastToWorkspace(updated.workspace_id, "card:edited", updated);
     res.json(updated);
   },
 );
@@ -213,6 +234,7 @@ cardsRouter.delete(
       "card_deleted",
       `Card "${card.title}" was deleted`,
     );
+    broadcastToWorkspace(card.workspace_id, "card:deleted", { id: card.id });
 
     res.status(204).send();
   },
