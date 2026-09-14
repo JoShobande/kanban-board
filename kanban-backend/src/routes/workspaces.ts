@@ -113,3 +113,16 @@ workspacesRouter.get(
     res.json(entries);
   },
 );
+
+workspacesRouter.get("/", (req, res) => {
+  const workspaces = db
+    .prepare(
+      `SELECT workspaces.id, workspaces.name, workspaces.created_at
+       FROM workspaces
+       JOIN workspace_members ON workspaces.id = workspace_members.workspace_id
+       WHERE workspace_members.user_id = ?`,
+    )
+    .all(req.userId);
+
+  res.json(workspaces);
+});

@@ -1,0 +1,24 @@
+@import "tailwindcss";
+
+:root {
+  --ink: #171d1a;
+  --panel: #e8e4d9;
+  --accent: #e3a73e;
+  --accent-teal: #3f8f79;
+  --accent-rust: #b14d34;
+  --text-ink: #1c211e;
+  --text-muted: #6b6f68;
+}
+
+.font-display {
+  font-family: var(--font-display), serif;
+}
+
+.font-body {
+  font-family: var(--font-body), sans-serif;
+}
+
+body {
+  background: var(--ink);
+  color: var(--text-ink);
+}

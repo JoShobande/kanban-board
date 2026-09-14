@@ -70,6 +70,12 @@ cardsRouter.post(
       description: description ?? null,
       version: 1,
     });
+    broadcastToWorkspace(workspaceId, "activity:new", {
+      actor: req.userId!,
+      action: "card_created",
+      detail: `Card "${title}" was created`,
+      created_at: new Date().toISOString(),
+    });
 
     res.status(201).json({
       id: result.lastInsertRowid,
@@ -164,6 +170,12 @@ cardsRouter.patch(
       `Moved "${updated.title}" to ${updated.column_key}`,
     );
     broadcastToWorkspace(updated.workspace_id, "card:moved", updated);
+    broadcastToWorkspace(updated.workspace_id, "activity:new", {
+      actor: req.userId!,
+      action: "card_moved",
+      detail: `Moved "${updated.title}" to ${updated.column_key}`,
+      created_at: new Date().toISOString(),
+    });
     res.json(updated);
   },
 );
@@ -207,6 +219,12 @@ cardsRouter.patch(
       `Edited "${updated.title}"`,
     );
     broadcastToWorkspace(updated.workspace_id, "card:edited", updated);
+    broadcastToWorkspace(updated.workspace_id, "activity:new", {
+      actor: req.userId!,
+      action: "card_moved",
+      detail: `Moved "${updated.title}" to ${updated.column_key}`,
+      created_at: new Date().toISOString(),
+    });
     res.json(updated);
   },
 );
@@ -235,6 +253,12 @@ cardsRouter.delete(
       `Card "${card.title}" was deleted`,
     );
     broadcastToWorkspace(card.workspace_id, "card:deleted", { id: card.id });
+    broadcastToWorkspace(card.workspace_id, "activity:new", {
+      actor: req.userId!,
+      action: "card_deleted",
+      detail: `Card "${card.title}" was deleted`,
+      created_at: new Date().toISOString(),
+    });
 
     res.status(204).send();
   },
