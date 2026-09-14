@@ -24,6 +24,7 @@ interface BoardProps {
   workspaceId: string;
   userId: string;
   onCardChanged: () => void;
+  conflictCardId: number | null;
 }
 
 const COLUMN_DEFS = [
@@ -40,6 +41,7 @@ export function Board({
   workspaceId,
   userId,
   onCardChanged,
+  conflictCardId,
 }: BoardProps) {
   const columns = COLUMNS.reduce<Record<string, CardProp[]>>(
     (acc, columnKey) => {
@@ -95,6 +97,7 @@ export function Board({
             workspaceId={workspaceId}
             userId={userId}
             onCardChanged={onCardChanged}
+            conflictCardId={conflictCardId}
           />
         ))}
       </div>

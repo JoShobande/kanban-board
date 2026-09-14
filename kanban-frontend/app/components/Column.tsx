@@ -27,6 +27,7 @@ interface ColumnProps {
   workspaceId: string;
   userId: string;
   onCardChanged: () => void;
+  conflictCardId: number | null;
 }
 
 export function Column({
@@ -37,6 +38,7 @@ export function Column({
   workspaceId,
   userId,
   onCardChanged,
+  conflictCardId,
 }: ColumnProps) {
   const { setNodeRef } = useDroppable({ id: columnKey });
   const [modalOpen, setModalOpen] = useState(false);
@@ -99,6 +101,7 @@ export function Column({
                 key={card.id}
                 card={card}
                 onEdit={() => setEditingCard(card)}
+                hasConflict={card.id === conflictCardId}
               />
             </div>
           ))}

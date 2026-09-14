@@ -17,6 +17,7 @@ export function useBoard(workspaceId: string, userId: string) {
   const [error, setError] = useState<string | null>(null);
   const [connected, setConnected] = useState(false);
   const [presentUsers, setPresentUsers] = useState<string[]>([]);
+  const [conflictCardId, setConflictCardId] = useState<number | null>(null);
 
   async function fetchBoard() {
     setLoading(true);
@@ -107,6 +108,8 @@ export function useBoard(workspaceId: string, userId: string) {
         setCards((prevCards) =>
           prevCards.map((card) => (card.id === current.id ? current : card)),
         );
+        setConflictCardId(current.id);
+        setTimeout(() => setConflictCardId(null), 2500);
         return;
       }
 
@@ -128,5 +131,6 @@ export function useBoard(workspaceId: string, userId: string) {
     connected,
     presentUsers,
     refetch: fetchBoard,
+    conflictCardId,
   };
 }

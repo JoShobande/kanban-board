@@ -11,9 +11,10 @@ interface CardProps {
     version: number;
   };
   onEdit: () => void;
+  hasConflict: boolean;
 }
 
-export function Card({ card, onEdit }: CardProps) {
+export function Card({ card, onEdit, hasConflict }: CardProps) {
   const {
     attributes,
     listeners,
@@ -36,7 +37,7 @@ export function Card({ card, onEdit }: CardProps) {
       style={style}
       className={`bg-[var(--panel)] rounded p-3 select-none transition-shadow ${
         isDragging ? "shadow-lg shadow-black/30" : "shadow-none"
-      }`}
+      } ${hasConflict ? "ring-2 ring-[var(--accent-rust)]" : ""}`}
     >
       <div {...attributes} {...listeners} className="cursor-grab">
         <p className="font-body text-sm font-medium text-[var(--text-ink)]">
@@ -48,6 +49,11 @@ export function Card({ card, onEdit }: CardProps) {
           </p>
         )}
       </div>
+      {hasConflict && (
+        <p className="font-body text-[10px] text-[var(--accent-rust)] mt-2 font-medium">
+          Updated by someone else
+        </p>
+      )}
       <button
         onClick={onEdit}
         className="font-body text-[10px] text-[var(--text-muted)] mt-2 hover:text-[var(--accent)]"

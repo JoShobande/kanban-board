@@ -38,10 +38,16 @@ function BoardPage({ userId }: { userId: string }) {
     localStorage.setItem("lastWorkspaceId", newId);
   }
 
-  const { cards, loading, error, moveCard, presentUsers, refetch } = useBoard(
-    workspaceId,
-    userId,
-  );
+  const {
+    cards,
+    loading,
+    error,
+    moveCard,
+    presentUsers,
+    refetch,
+    conflictCardId,
+    connected,
+  } = useBoard(workspaceId, userId);
 
   return (
     <div className="min-h-screen p-6">
@@ -56,16 +62,22 @@ function BoardPage({ userId }: { userId: string }) {
             onSwitch={handleSwitch}
           />
         </div>
-        <div className="flex gap-1.5">
-          {presentUsers.map((user) => (
-            <span
-              key={user}
-              title={user}
-              className="font-body text-xs bg-[var(--accent)] text-[var(--ink)] rounded-full w-6 h-6 flex items-center justify-center font-medium"
-            >
-              {user.charAt(0).toUpperCase()}
-            </span>
-          ))}
+        <div className="flex items-center gap-3">
+          <span
+            className={`w-2 h-2 rounded-full ${connected ? "bg-[var(--accent-teal)]" : "bg-[var(--accent-rust)]"}`}
+            title={connected ? "Connected" : "Disconnected"}
+          />
+          <div className="flex gap-1.5">
+            {presentUsers.map((user) => (
+              <span
+                key={user}
+                title={user}
+                className="font-body text-xs bg-[var(--accent)] text-[var(--ink)] rounded-full w-6 h-6 flex items-center justify-center font-medium"
+              >
+                {user.charAt(0).toUpperCase()}
+              </span>
+            ))}
+          </div>
         </div>
       </div>
       {!workspaceId && (
@@ -93,6 +105,7 @@ function BoardPage({ userId }: { userId: string }) {
                 workspaceId={workspaceId}
                 userId={userId}
                 onCardChanged={refetch}
+                conflictCardId={conflictCardId}
               />
             )}
           </div>
